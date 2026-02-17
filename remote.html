@@ -1,0 +1,629 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <meta name="theme-color" content="#667eea">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="TV Remote">
+    <title>Télécommande TV Free</title>
+    
+    <!-- Icônes pour différentes plateformes -->
+    <link rel="icon" type="image/png" sizes="192x192" href="/icon-192.png">
+    <link rel="icon" type="image/png" sizes="512x512" href="/icon-512.png">
+    <link rel="apple-touch-icon" href="/icon-192.png">
+    
+    <!-- Manifest PWA -->
+    <link rel="manifest" href="/manifest.json">
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+            color: white;
+        }
+
+        .container {
+            max-width: 500px;
+            margin: 0 auto;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding: 20px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            backdrop-filter: blur(10px);
+        }
+
+        h1 {
+            font-size: 1.8em;
+            margin-bottom: 10px;
+        }
+
+        .status {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            margin-top: 10px;
+            font-size: 0.9em;
+        }
+
+        .status-indicator {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: #ff4444;
+            animation: pulse 2s infinite;
+        }
+
+        .status-indicator.active {
+            background: #44ff44;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        .controls {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 30px;
+        }
+
+        .control-btn {
+            flex: 1;
+            padding: 15px;
+            font-size: 1em;
+            font-weight: 600;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .start-btn {
+            background: #44ff44;
+            color: #333;
+        }
+
+        .start-btn:active {
+            transform: scale(0.95);
+            background: #33dd33;
+        }
+
+        .stop-btn {
+            background: #ff4444;
+            color: white;
+        }
+
+        .stop-btn:active {
+            transform: scale(0.95);
+            background: #dd3333;
+        }
+
+        .channels {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 12px;
+        }
+
+        .channel-btn {
+            padding: 20px;
+            font-size: 1em;
+            font-weight: 600;
+            border: none;
+            border-radius: 12px;
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            cursor: pointer;
+            transition: all 0.3s;
+            backdrop-filter: blur(10px);
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .channel-btn:active {
+            transform: scale(0.95);
+            background: rgba(255, 255, 255, 0.4);
+        }
+
+        .channel-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .message {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            padding: 15px 30px;
+            background: rgba(0, 0, 0, 0.9);
+            color: white;
+            border-radius: 10px;
+            font-weight: 500;
+            z-index: 1000;
+            opacity: 0;
+            transition: opacity 0.3s;
+            pointer-events: none;
+        }
+
+        .message.show {
+            opacity: 1;
+        }
+
+        .message.success {
+            background: rgba(68, 255, 68, 0.9);
+            color: #333;
+        }
+
+        .message.error {
+            background: rgba(255, 68, 68, 0.9);
+        }
+
+        .loading {
+            display: none;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(0, 0, 0, 0.8);
+            padding: 30px;
+            border-radius: 15px;
+            z-index: 999;
+        }
+
+        .loading.show {
+            display: block;
+        }
+
+        .spinner {
+            border: 4px solid rgba(255, 255, 255, 0.3);
+            border-top: 4px solid white;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        footer {
+            margin-top: 40px;
+            text-align: center;
+            font-size: 0.8em;
+            opacity: 0.7;
+        }
+
+        .volume-control {
+            margin-top: 30px;
+            padding: 20px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            backdrop-filter: blur(10px);
+        }
+
+        .volume-control h2 {
+            font-size: 1.2em;
+            margin-bottom: 15px;
+            text-align: center;
+        }
+
+        .volume-buttons {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 10px;
+        }
+
+        .volume-btn {
+            padding: 15px;
+            font-size: 0.9em;
+            font-weight: 600;
+            border: none;
+            border-radius: 10px;
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            cursor: pointer;
+            transition: all 0.3s;
+            backdrop-filter: blur(10px);
+            border: 2px solid rgba(255, 255, 255, 0.3);
+        }
+
+        .volume-btn:active {
+            transform: scale(0.95);
+            background: rgba(255, 255, 255, 0.4);
+        }
+
+        .volume-btn.active {
+            background: rgba(68, 255, 68, 0.3);
+            border-color: #44ff44;
+        }
+
+        /* Bouton installation PWA */
+        .pwa-install-btn {
+            display: none; /* Caché par défaut, affiché si installable */
+            width: 100%;
+            padding: 12px;
+            margin: 10px 0;
+            background: rgba(255, 255, 255, 0.15);
+            border: 2px dashed rgba(255, 255, 255, 0.5);
+            border-radius: 12px;
+            color: white;
+            font-size: 1em;
+            cursor: pointer;
+            text-align: center;
+            transition: all 0.2s;
+        }
+
+        .pwa-install-btn:hover {
+            background: rgba(255, 255, 255, 0.25);
+            border-color: white;
+        }
+
+        /* Panneau configuration serveur */
+        .server-config {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            padding: 15px;
+            margin-bottom: 15px;
+        }
+
+        .server-config h2 {
+            font-size: 1em;
+            margin-bottom: 10px;
+            opacity: 0.9;
+        }
+
+        .server-config-row {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+
+        .server-input {
+            flex: 1;
+            padding: 10px 12px;
+            border-radius: 8px;
+            border: 2px solid rgba(255,255,255,0.3);
+            background: rgba(255,255,255,0.15);
+            color: white;
+            font-size: 0.85em;
+        }
+
+        .server-input::placeholder { opacity: 0.6; }
+        .server-input:focus {
+            outline: none;
+            border-color: rgba(255,255,255,0.7);
+        }
+
+        .server-save-btn {
+            padding: 10px 14px;
+            border-radius: 8px;
+            border: none;
+            background: rgba(68, 255, 68, 0.3);
+            color: white;
+            font-size: 1em;
+            cursor: pointer;
+            white-space: nowrap;
+        }
+
+        .server-save-btn:active { opacity: 0.7; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>📺 Télécommande TV</h1>
+            <div class="status">
+                <div class="status-indicator" id="statusIndicator"></div>
+                <span id="statusText">Inactif</span>
+            </div>
+        </header>
+
+        <!-- Bouton installation PWA -->
+        <button class="pwa-install-btn" id="pwaInstallBtn" onclick="installPWA()">
+            📲 Installer sur l'écran d'accueil
+        </button>
+
+        <!-- Configuration serveur (utile si hébergé sur GitHub Pages) -->
+        <div class="server-config">
+            <h2>⚙️ Serveur</h2>
+            <div class="server-config-row">
+                <input type="text" class="server-input" id="serverInput"
+                    placeholder="http://192.168.1.x:3000" />
+                <button class="server-save-btn" onclick="saveServer()">💾</button>
+            </div>
+        </div>
+
+        <div class="controls">
+            <button class="control-btn start-btn" onclick="startTV()">▶️ Démarrer</button>
+            <button class="control-btn stop-btn" onclick="stopTV()">⏹️ Arrêter</button>
+        </div>
+
+        <div class="channels" id="channelGrid">
+            <!-- Les chaînes seront chargées dynamiquement -->
+        </div>
+
+        <div class="volume-control">
+            <h2>🔊 Volume</h2>
+            <div class="volume-buttons">
+                <button class="volume-btn" onclick="setVolume(0)">🔇<br>0%</button>
+                <button class="volume-btn" onclick="setVolume(1)">🔉<br>30%</button>
+                <button class="volume-btn" onclick="setVolume(2)">🔊<br>50%</button>
+                <button class="volume-btn" onclick="setVolume(3)">🔊<br>75%</button>
+            </div>
+        </div>
+
+        <div class="volume-control" id="audioSection">
+            <h2>🎵 Sortie Audio</h2>
+            <div class="volume-buttons" id="audioButtons">
+                <button class="volume-btn active" id="btn-realtek" onclick="setAudioDevice('realtek')">🖥️<br>PC</button>
+                <button class="volume-btn" id="btn-bluetooth" onclick="setAudioDevice('bluetooth')">🔵<br>Bluetooth</button>
+            </div>
+        </div>
+
+        <footer>
+            <p>Contrôlez votre PC depuis votre smartphone</p>
+        </footer>
+    </div>
+
+    <div class="message" id="message"></div>
+    <div class="loading" id="loading">
+        <div class="spinner"></div>
+    </div>
+
+    <script>
+        // API_BASE : utilise localStorage si disponible (mode GitHub Pages)
+        // sinon utilise l'origine courante (mode local)
+        const DEFAULT_SERVER = window.location.origin.includes('github.io') 
+            ? '' 
+            : window.location.origin;
+        let API_BASE = localStorage.getItem('tvRemoteServer') || DEFAULT_SERVER;
+
+        let isActive = false;
+        let currentVolume = null;
+        let currentAudio = 'realtek';
+        let deferredPrompt = null;
+
+        // Initialiser le champ serveur
+        document.addEventListener('DOMContentLoaded', () => {
+            const input = document.getElementById('serverInput');
+            input.value = API_BASE;
+            // Masquer le panneau si on est en local (pas GitHub Pages)
+            if (!window.location.origin.includes('github.io') && API_BASE) {
+                document.querySelector('.server-config').style.opacity = '0.5';
+            }
+        });
+
+        // Sauvegarder l'adresse du serveur
+        function saveServer() {
+            const input = document.getElementById('serverInput').value.trim();
+            if (!input) {
+                showMessage('⚠️ Entrez une adresse serveur', 'error');
+                return;
+            }
+            // Supprimer le slash final si présent
+            API_BASE = input.replace(/\/$/, '');
+            localStorage.setItem('tvRemoteServer', API_BASE);
+            showMessage(`✅ Serveur : ${API_BASE}`, 'success');
+            // Recharger les chaînes avec le nouveau serveur
+            loadChannels();
+        }
+
+        // =====================
+        // GESTION PWA
+        // =====================
+
+        // Intercepter l'événement si HTTPS disponible
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault();
+            deferredPrompt = e;
+            document.getElementById('pwaInstallBtn').style.display = 'block';
+        });
+
+        // Cacher le bouton si déjà en mode standalone
+        if (window.matchMedia('(display-mode: standalone)').matches || 
+            window.navigator.standalone === true) {
+            document.getElementById('pwaInstallBtn').style.display = 'none';
+        } else {
+            // Toujours afficher le bouton (instructions manuelles en HTTP)
+            document.getElementById('pwaInstallBtn').style.display = 'block';
+        }
+
+        // Lancer l'installation PWA
+        async function installPWA() {
+            // Cas HTTPS : prompt natif disponible
+            if (deferredPrompt) {
+                deferredPrompt.prompt();
+                const { outcome } = await deferredPrompt.userChoice;
+                if (outcome === 'accepted') {
+                    showMessage('✅ Installation en cours...', 'success');
+                    document.getElementById('pwaInstallBtn').style.display = 'none';
+                }
+                deferredPrompt = null;
+                return;
+            }
+
+            // Cas HTTP local : instructions manuelles selon le navigateur
+            const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+            const isAndroid = /Android/.test(navigator.userAgent);
+
+            if (isIOS) {
+                showMessage('📱 Safari → icône Partager → "Sur l\'écran d\'accueil"', 'success');
+            } else if (isAndroid) {
+                showMessage('📱 Chrome → menu ⋮ → "Ajouter à l\'écran d\'accueil"', 'success');
+            } else {
+                showMessage('📱 Menu navigateur → "Ajouter à l\'écran d\'accueil"', 'success');
+            }
+        }
+
+        // Charger les chaînes au démarrage
+        async function loadChannels() {
+            try {
+                const response = await fetch(`${API_BASE}/api/channels`);
+                const data = await response.json();
+                
+                isActive = data.isActive;
+                updateStatus();
+
+                const grid = document.getElementById('channelGrid');
+                grid.innerHTML = '';
+
+                data.channels.forEach(channel => {
+                    const btn = document.createElement('button');
+                    btn.className = 'channel-btn';
+                    btn.textContent = channel.name;
+                    btn.onclick = () => changeChannel(channel.id, channel.name);
+                    grid.appendChild(btn);
+                });
+            } catch (error) {
+                showMessage('Erreur de connexion au serveur', 'error');
+            }
+        }
+
+        // Mettre à jour le statut
+        function updateStatus() {
+            const indicator = document.getElementById('statusIndicator');
+            const text = document.getElementById('statusText');
+            
+            if (isActive) {
+                indicator.classList.add('active');
+                text.textContent = 'Actif';
+            } else {
+                indicator.classList.remove('active');
+                text.textContent = 'Inactif';
+            }
+        }
+
+        // Démarrer le mode TV
+        async function startTV() {
+            showLoading(true);
+            try {
+                const response = await fetch(`${API_BASE}/api/start`, {
+                    method: 'POST'
+                });
+                const data = await response.json();
+                
+                if (data.success) {
+                    isActive = true;
+                    updateStatus();
+                    showMessage('Mode TV activé', 'success');
+                } else {
+                    showMessage('Erreur: ' + data.error, 'error');
+                }
+            } catch (error) {
+                showMessage('Erreur de connexion', 'error');
+            }
+            showLoading(false);
+        }
+
+        // Arrêter le mode TV
+        async function stopTV() {
+            showLoading(true);
+            try {
+                const response = await fetch(`${API_BASE}/api/stop`, {
+                    method: 'POST'
+                });
+                const data = await response.json();
+                
+                if (data.success) {
+                    isActive = false;
+                    updateStatus();
+                    showMessage('Mode TV désactivé', 'success');
+                } else {
+                    showMessage('Erreur: ' + data.error, 'error');
+                }
+            } catch (error) {
+                showMessage('Erreur de connexion', 'error');
+            }
+            showLoading(false);
+        }
+
+        // Changer de chaîne
+        async function changeChannel(channelId, channelName) {
+            showLoading(true);
+            try {
+                const response = await fetch(`${API_BASE}/api/channel/${channelId}`, {
+                    method: 'POST'
+                });
+                const data = await response.json();
+                
+                if (data.success) {
+                    isActive = true;
+                    updateStatus();
+                    showMessage(`📺 ${channelName}`, 'success');
+                } else {
+                    showMessage('Erreur: ' + data.error, 'error');
+                }
+            } catch (error) {
+                showMessage('Erreur de connexion', 'error');
+            }
+            showLoading(false);
+        }
+
+        // Afficher un message
+        function showMessage(text, type = 'info') {
+            const msg = document.getElementById('message');
+            msg.textContent = text;
+            msg.className = `message ${type} show`;
+            
+            setTimeout(() => {
+                msg.classList.remove('show');
+            }, 3000);
+        }
+
+        // Mettre à jour l'affichage des boutons de volume
+        function updateVolumeButtons() {
+            const buttons = document.querySelectorAll('.volume-btn');
+            buttons.forEach((btn, index) => {
+                if (index === currentVolume) {
+                    btn.classList.add('active');
+                } else {
+                    btn.classList.remove('active');
+                }
+            });
+        }
+
+        // Vérifier le statut périodiquement
+        setInterval(async () => {
+            try {
+                const response = await fetch(`${API_BASE}/api/status`);
+                const data = await response.json();
+                isActive = data.active;
+                updateStatus();
+            } catch (error) {
+                // Ignore errors
+            }
+        }, 5000);
+
+        // Charger les chaînes au démarrage
+        loadChannels();
+
+        // Enregistrement du Service Worker (requis pour PWA installable)
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('/sw.js')
+                .then(() => console.log('✓ Service Worker enregistré'))
+                .catch((err) => console.log('Service Worker:', err));
+        }
+    </script>
+</body>
+</html>
