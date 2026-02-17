@@ -591,6 +591,12 @@
             }, 3000);
         }
 
+        // Afficher/masquer le loading
+        function showLoading(show) {
+            const loading = document.getElementById('loading');
+            loading.className = show ? 'loading show' : 'loading';
+        }
+
         // Mettre à jour l'affichage des boutons de volume
         function updateVolumeButtons() {
             const buttons = document.querySelectorAll('.volume-btn');
